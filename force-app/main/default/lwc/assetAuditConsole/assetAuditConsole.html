@@ -1,0 +1,11 @@
+<template>
+    <lightning-card title="Asset Audit Console">
+        <div class="slds-m-around_medium">
+            <lightning-input type='date' name='startDate' label='Please Enter Start Date'></lightning-input>
+            <lightning-input type='date' name='endDate' label='Please Enter End Date'></lightning-input>
+            <lightning-input type='number' name='percentage' label='Specify a percent difference' formatter='percent' value='0.20' step="0.01"></lightning-input>
+            <lightning-output-field type='number' name='debugCountofRecords' value={returnedRecordCount}></lightning-output-field>
+            <lightning-button>Generate Report</lightning-button>
+        </div>
+    </lightning-card>
+</template>

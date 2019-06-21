@@ -3,9 +3,6 @@
         "experimentalDecorators": true,
         "baseUrl": ".",
         "paths": {
-            "c/AssetAuditConsole": [
-                "AssetAuditConsole/AssetAuditConsole.js"
-            ],
             "c/assetAuditConsole": [
                 "assetAuditConsole/assetAuditConsole.js"
             ]

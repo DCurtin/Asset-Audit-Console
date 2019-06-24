@@ -21,5 +21,65 @@
                     </div>
             </div>
         </div>
+        <template if:true={fullSalesReport}>
+            <template for:each={fullSalesReport} for:item="report">
+                <div key={report.id}>
+                    <lable>Full Sale: {report.name}     AccountNameHERE     CUSIPNameHere</lable>
+                    <div class='slds-grid slds-m-bottom_xx-large'>
+                        <div class='slds-col' style='width:50%'>
+                            <label>List of Debits</label>
+                            <!--<table class='DebitTable' style='width:100%'>
+                                <tr>
+                                    <th>name</th>
+                                </tr>
+                                <template for:each={report.debitList} for:item="debitItem">
+                                    <tr key={debitItem.id}> <td>{debitItem.Name}</td></tr>
+                                </template>
+                            </table>-->
+                            <lightning-datatable
+                                key-field="id"
+                                hide-checkbox-column="True"
+                                data={report.debitList}
+                                columns={columns}>
+                            </lightning-datatable>
+                            <label>Total Debit </label>
+                            <label>${report.totalDebit}</label>
+                        </div>
+                        <div class='slds-col slds-border_left' style='width:50%'>
+                            <label> List of Credits</label>
+                            <!--<table class='DebitTable' style='width:100%'>
+                                <tr>
+                                    <th>name</th>
+                                </tr>
+                                <template for:each={report.creditList} for:item="creditItem">
+                                    <tr key={creditItem.id}> <td>{creditItem.Name}</td></tr>
+                                </template>
+                            </table>-->
+                            <lightning-datatable
+                                key-field="id"
+                                hide-checkbox-column="True"
+                                data={report.creditList}
+                                columns={columns}>
+                            </lightning-datatable>
+                            <label>Total Credit </label>
+                            <label>${report.totalCredit}</label>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <!--<div class='slds-grid'>
+                        <div class='slds-col'>
+                            <label>Total Debit </label>
+                            <label>${report.totalDebit}</label>
+                        </div>
+                        <div class='slds-col slds-border_left'>
+                            <label>Total Credit </label>
+                            <label>${report.totalCredit}</label>
+                        </div>
+                    </div>-->
+                </div>
+                <!--<table class="ReportTable" style="width:100%">-->
+            </template>
+        </template>
     </lightning-card>
 </template>

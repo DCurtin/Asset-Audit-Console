@@ -27,11 +27,15 @@
     <types>
         <members>*</members>
         <name>LightningComponentBundle</name>
+    </types>-->
+    <types>
+        <members>AssetAuditWrapper</members>
+        <name>ApexClass</name>
     </types>
     <types>
-        <members>*</members>
-        <name>StaticResource</name>
-    </types>-->
+        <members>AssetAuditConsole</members>
+        <name>ApexClass</name>
+    </types>
     <types>
         <members>assetAuditConsole</members>
         <name>LightningComponentBundle</name>

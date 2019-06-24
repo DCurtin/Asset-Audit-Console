@@ -4,9 +4,9 @@ import generateAssetAuditReport from '@salesforce/apex/AssetAuditConsole.generat
 
 const columns = [
     { label: 'Name', fieldName: 'Name'},
-    { label: 'Amount (Cash Total)', fieldName: 'Amount_Cash_Total__c', type: 'currency'},
     { label: 'Date Complete', fieldName: 'Date_Complete__c', type: 'date'},
-    { label: 'Type', fieldName: 'Transaction_Type__c'}
+    { label: 'Type', fieldName: 'Transaction_Type__c'},
+    { label: 'Amount (Cash Total)', fieldName: 'Amount_Cash_Total__c', type: 'currency'}
 ]
 
 export default class AssetAuditConsole extends LightningElement {

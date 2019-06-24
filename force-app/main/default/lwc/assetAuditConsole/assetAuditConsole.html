@@ -23,9 +23,9 @@
         </div>
         <template if:true={fullSalesReport}>
             <template for:each={fullSalesReport} for:item="report">
-                <div key={report.id}>
-                    <lable>Full Sale: {report.name}     AccountNameHERE     CUSIPNameHere</lable>
-                    <div class='slds-grid slds-m-bottom_xx-large'>
+                <div class='slds-m-left_small slds-m-right_small slds-m-bottom_xx-large' key={report.saleId}>
+                    <lable>Full Sale: {report.saleName}  ||  {report.accountName}   ||  {report.assetName}</lable>
+                    <div class='slds-grid'>
                         <div class='slds-col' style='width:50%'>
                             <label>List of Debits</label>
                             <!--<table class='DebitTable' style='width:100%'>
@@ -42,8 +42,7 @@
                                 data={report.debitList}
                                 columns={columns}>
                             </lightning-datatable>
-                            <label>Total Debit </label>
-                            <label>${report.totalDebit}</label>
+                            <label class='slds-float--right slds-m-right_small'>Total Dedit ${report.totalDebit}</label>
                         </div>
                         <div class='slds-col slds-border_left' style='width:50%'>
                             <label> List of Credits</label>
@@ -61,10 +60,10 @@
                                 data={report.creditList}
                                 columns={columns}>
                             </lightning-datatable>
-                            <label>Total Credit </label>
-                            <label>${report.totalCredit}</label>
+                            <label class='slds-float--right slds-m-right_small'>Total Credit ${report.totalCredit}</label>
                         </div>
                     </div>
+                    <div>Total Difference: {report.totalDiff} || Percent Difference {report.percentDiff}</div>
 
                     <hr>
                     <!--<div class='slds-grid'>

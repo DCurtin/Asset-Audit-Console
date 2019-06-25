@@ -24,7 +24,7 @@
         <template if:true={fullSalesReport}>
             <template for:each={fullSalesReport} for:item="report">
                 <div class='slds-grid slds-grid_vertical slds-m-left_small slds-m-right_small slds-m-bottom_xx-large' key={report.saleId}>
-                    <div class='slds-col'><lable>Full Sale: <a href={report.saleId}> {report.saleName} </a> || <a href={report.accountId}>{report.accountName}</a>  || <a href='https//entrust.my.salesforce.com/{report.assetId}'>{report.assetName}</a></lable></div>
+                    <div class='slds-col'><lable>Full Sale: <a data-id={report.saleId} onclick={handleTransactionView}> {report.saleName} </a> || <a data-id={report.accountId} onclick={handleAccountView}>{report.accountName}</a>  || <a data-id={report.assetId} onclick={handleAssetView}>{report.assetName}</a></lable></div>
                     <div class='slds-col slds-grid slds-m-bottom_xx-large'>
                         <div class='slds-col' style='width:50%'>
                             <label>List of Debits</label>
@@ -44,7 +44,7 @@
                             </lightning-datatable>
                             <label class='slds-float--right slds-m-right_small'>Total Dedit ${report.totalDebit}</label>
                         </div>
-                        <div class='slds-col slds-border_left' style='width:50%'>
+                        <div class='slds-col' style='width:50%'>
                             <label> List of Credits</label>
                             <!--<table class='DebitTable' style='width:100%'>
                                 <tr>
@@ -63,7 +63,7 @@
                             <label class='slds-float--right slds-m-right_small'>Total Credit ${report.totalCredit}</label>
                         </div>
                     </div>
-                    <div class='slds-col'><label class='slds-float--right slds-m-right_small'>Total Diff: ${report.totalDiff} || Percent Diff: %{report.percentDiff}</label></div>
+                    <div class='slds-col'><label class='slds-float--right slds-m-right_small'>Total Diff: ${report.totalDiff} || Percent Diff: {report.percentDiff}%</label></div>
                     <hr>
 
                     <!--<div class='slds-grid'>

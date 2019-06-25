@@ -18,13 +18,13 @@ public with sharing class AssetAuditWrapper {
     public String assetName;
 
     @AuraEnabled
-    public Decimal totalDebit;
+    public String totalDebit;
 
     @AuraEnabled
-    public Decimal totalCredit;
+    public String totalCredit;
 
     @AuraEnabled
-    public Decimal totalDiff;
+    public String totalDiff;
 
     @AuraEnabled
     public Decimal percentDiff;

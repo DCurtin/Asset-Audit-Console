@@ -1,17 +1,17 @@
 public with sharing class AssetAuditConsole {
 
     @AuraEnabled
-    public static List<AssetAuditWrapper> generateAssetAuditReport (Date startDate, Date endDate)
+    public static List<AssetAuditWrapper> generateAssetAuditReport (Date startDate, Date endDate, Decimal percentFilter)
     {
-        Map<Id,Transaction__c> fullSaleTransactionsMap = new Map<Id,Transaction__c>([SELECT id, Name, Account__c, CUSIP__c, XAudit_AccountName__c FROM Transaction__c where Full_Partial__c='Full' AND RecordType__c LIKE 'Sell%' AND (Date_Complete__c > :startDate AND Date_Complete__c < :endDate)]);
+        Map<Id,Transaction__c> fullSaleTransactionsMap = new Map<Id,Transaction__c>([SELECT id, Name, Account__c , Account_Type__c, CUSIP__c, XAudit_AccountName__c FROM Transaction__c where Full_Partial__c='Full' AND RecordType__c LIKE 'Sell%' AND (Date_Complete__c > :startDate AND Date_Complete__c < :endDate)]);
 
         Set<Id> cusipIdSet = getCusipSetFromTransactionMap(fullSaleTransactionsMap);
         Map<Id,IRAAsset__c> cusipMap = getCusipMapFromCusipIdSet(cusipIdSet);
 
-        Map<Id,Transaction__c> debitTransactionsMap = new Map<Id,Transaction__c>([SELECT Id, Name, Account__c, CUSIP__c,Amount_Cash_Total__c, Transaction_Type__c, Date_Complete__c From Transaction__c Where Credit_or_Debit__c='Debit' AND CUSIP__c In :cusipIdSet]); //getDebitTransactionsMapRelatedToCusipSet(cusipIdSet);
-        Map<Id,Transaction__c> creditTransactionsMap = new Map<Id,Transaction__c>([SELECT Id, Name, Account__c, CUSIP__c, Amount_Cash_Total__c, Transaction_Type__c, Date_Complete__c From Transaction__c Where Credit_or_Debit__c='Credit' AND CUSIP__c In :cusipIdSet]);
+        Map<Id,Transaction__c> debitTransactionsMap = new Map<Id,Transaction__c>([SELECT Id, Name, Account__c, CUSIP__c,Amount_Cash_Total__c, Transaction_Type__c, Date_Complete__c From Transaction__c Where Credit_or_Debit__c='Debit' AND CUSIP__c In :cusipIdSet AND Date_Complete__c != null ORDER BY Date_Complete__c ASC]); //getDebitTransactionsMapRelatedToCusipSet(cusipIdSet);
+        Map<Id,Transaction__c> creditTransactionsMap = new Map<Id,Transaction__c>([SELECT Id, Name, Account__c, CUSIP__c, Amount_Cash_Total__c, Transaction_Type__c, Date_Complete__c From Transaction__c Where Credit_or_Debit__c='Credit' AND CUSIP__c In :cusipIdSet AND Date_Complete__c != null ORDER BY Date_Complete__c ASC]);
 
-        List<AssetAuditWrapper> assetAuditWrapperList = generateAssetAuditWrapperList(fullSaleTransactionsMap, cusipMap, debitTransactionsMap, creditTransactionsMap);
+        List<AssetAuditWrapper> assetAuditWrapperList = generateAssetAuditWrapperList(fullSaleTransactionsMap, cusipMap, debitTransactionsMap, creditTransactionsMap, percentFilter);
         //query for all cusips to get their names
         return assetAuditWrapperList;
     }
@@ -21,7 +21,7 @@ public with sharing class AssetAuditConsole {
     private static Map<Id,IRAAsset__c> getCusipMapFromCusipIdSet(Set<Id> cusipIdSet)
     {
         //Set<String> cusipIdSet = getCusipIdSetFromTransactionMap(transactionsMap);
-        Map<Id,IRAAsset__c> cusipMap = new Map<Id,IRAAsset__c>([SELECT id, name FROM IRAAsset__c WHERE id in :cusipIdSet]);
+        Map<Id,IRAAsset__c> cusipMap = new Map<Id,IRAAsset__c>([SELECT id, name, Asset_Type__c FROM IRAAsset__c WHERE id in :cusipIdSet]);
         return cusipMap;
     }
 
@@ -36,8 +36,9 @@ public with sharing class AssetAuditConsole {
         return cusipIdSet;
     }
 
-    private static List<AssetAuditWrapper> generateAssetAuditWrapperList(Map<Id,Transaction__c> fullSaleTransactionsMap, Map<Id,IRAAsset__c>  cusipMap, Map<Id,Transaction__c> debitTransactionsMap, Map<Id,Transaction__c> creditTransactionsMap)
+    private static List<AssetAuditWrapper> generateAssetAuditWrapperList(Map<Id,Transaction__c> fullSaleTransactionsMap, Map<Id,IRAAsset__c>  cusipMap, Map<Id,Transaction__c> debitTransactionsMap, Map<Id,Transaction__c> creditTransactionsMap, Decimal percentFilter)
     {
+        list<String> args = new String[]{'0','number','###,###,##0.00'};
         list<AssetAuditWrapper> assetAuditWrapperList = new list<AssetAuditWrapper>();
         for(Transaction__c fullSaleTransaction : fullSaleTransactionsMap.values())
         {
@@ -49,12 +50,28 @@ public with sharing class AssetAuditConsole {
 
             Decimal totalDiff = (totalCredit - totalDebit).setScale(2);
 
-            if(totalDiff <=0) //we are not interested in ammounts that lost logic for filtering percentage might go here
+            
+
+            if(totalDiff <=0 || totalDebit==0) //we are not interested in ammounts that lost logic for filtering percentage might go here
             {
                 continue;
             }
 
             Decimal percentDiff = ((totalDiff/totalDebit)*100).setScale(2);
+
+            if(percentDiff <= percentFilter)
+            {
+                continue;
+            }
+
+            /*Decimal percentDiff = 0;
+            if(totalDebit != 0)
+            {
+                percentDiff = ((totalDiff/totalDebit)*100).setScale(2);
+            }else {
+                percentDiff = 100;
+            }*/
+             
 
             IRAAsset__c fullSalesCusip = cusipMap.get(fullSaleTransaction.CUSIP__c);
 
@@ -63,14 +80,14 @@ public with sharing class AssetAuditConsole {
             assetAudit.saleId = fullSaleTransaction.Id;
             assetAudit.saleName = fullSaleTransaction.Name;
             assetAudit.accountId = fullSaleTransaction.Account__c;
-            assetAudit.accountName = fullSaleTransaction.XAudit_AccountName__c;
+            assetAudit.accountName = fullSaleTransaction.XAudit_AccountName__c + ' - ' + fullSaleTransaction.Account_Type__c;
             assetAudit.assetId = fullSalesCusip.Id;
-            assetAudit.assetName = fullSalesCusip.Name;
+            assetAudit.assetName = fullSalesCusip.Name + ' - ' + fullSalesCusip.Asset_Type__c;
             assetAudit.debitList=relatedDebitTransactions;
-            assetAudit.totalDebit=totalDebit;
+            assetAudit.totalDebit=String.format(totalDebit.format(), args);
             assetAudit.creditList=relatedCreditTransactions;
-            assetAudit.totalCredit=totalCredit;
-            assetAudit.totalDiff=totalDiff;
+            assetAudit.totalCredit=String.format(totalCredit.format(), args);
+            assetAudit.totalDiff=String.format(totalDiff.format(), args);
             assetAudit.percentDiff=percentDiff;
             assetAuditWrapperList.add(assetAudit);
         }

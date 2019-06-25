@@ -23,9 +23,9 @@
         </div>
         <template if:true={fullSalesReport}>
             <template for:each={fullSalesReport} for:item="report">
-                <div class='slds-m-left_small slds-m-right_small slds-m-bottom_xx-large' key={report.saleId}>
-                    <lable>Full Sale: {report.saleName}  ||  {report.accountName}   ||  {report.assetName}</lable>
-                    <div class='slds-grid'>
+                <div class='slds-grid slds-grid_vertical slds-m-left_small slds-m-right_small slds-m-bottom_xx-large' key={report.saleId}>
+                    <div class='slds-col'><lable>Full Sale: <a href={report.saleId}> {report.saleName} </a> || <a href={report.accountId}>{report.accountName}</a>  || <a href='https//entrust.my.salesforce.com/{report.assetId}'>{report.assetName}</a></lable></div>
+                    <div class='slds-col slds-grid slds-m-bottom_xx-large'>
                         <div class='slds-col' style='width:50%'>
                             <label>List of Debits</label>
                             <!--<table class='DebitTable' style='width:100%'>
@@ -63,9 +63,9 @@
                             <label class='slds-float--right slds-m-right_small'>Total Credit ${report.totalCredit}</label>
                         </div>
                     </div>
-                    <div>Total Difference: {report.totalDiff} || Percent Difference {report.percentDiff}</div>
-
+                    <div class='slds-col'><label class='slds-float--right slds-m-right_small'>Total Diff: {report.totalDiff} || Percent Diff: %{report.percentDiff}</label></div>
                     <hr>
+
                     <!--<div class='slds-grid'>
                         <div class='slds-col'>
                             <label>Total Debit </label>

@@ -31,7 +31,7 @@ export default class AssetAuditConsole extends LightningElement {
         //this.returnedRecordCount +=1;
         generateAssetAuditReport({startDate: this.startDate, endDate: this.endDate}).then(function(result)
         {
-            console.log(result[0].debitList);
+            console.log(result);
             this.returnedRecordCount=result.length;
             this.fullSalesReport = result;
 

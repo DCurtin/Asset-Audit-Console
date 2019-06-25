@@ -4,29 +4,37 @@ public with sharing class AssetAuditConsole {
     public static List<AssetAuditWrapper> generateAssetAuditReport (Date startDate, Date endDate)
     {
         List<Transaction__c> testTrans = [SELECT id, name, Amount_Cash_Total__c, Transaction_Type__c, Date_Complete__c FROM Transaction__c WHERE Amount_Cash_Total__c != null AND Date_Complete__c != null LIMIT 200];
-        List<AssetAuditWrapper> assetReport = new List<AssetAuditWrapper>();
-        list<id> testIdList = new List<id>();
-        
-        testIdList.add('a060M00000WfLI1QAN');
-        testIdList.add('a060M00000WfLI1QAO');
-        testIdList.add('a060M00000WfLI1QAP');
-        testIdList.add('a060M00000WfLI1QAQ');
-        testIdList.add('a060M00000WfLI1QAR');
+        List<Account> testAccounts = [SELECT id, name FROM Account WHERE IsPersonAccount=False LIMIT 200];
+        List<IRAAsset__c> testAssets = [SELECT id, name FROM IRAAsset__c LIMIT 200];
 
-        Integer testNumber = 584524;
+        List<AssetAuditWrapper> assetReport = new List<AssetAuditWrapper>();
+        
         Iterator<Transaction__c> transIter = testTrans.iterator();
+        Iterator<Account> acctIter = testAccounts.iterator();
+        Iterator<IRAAsset__c> assetIter = testAssets.iterator();
 
         for(integer index=0; index < 5; ++index)
         {
             AssetAuditWrapper record= new AssetAuditWrapper();
+            Transaction__c testSale = transIter.next();
+            Account testAcct = acctIter.next();
+            IRAAsset__c testAsset = assetIter.next(); 
 
-            record.id   = testIdList[index];
+            record.saleId   = testSale.id;
+            record.saleName = testSale.name;
 
-            record.name = 'TRANS-' + testNumber;
-            ++testNumber;
+            record.accountId = testAcct.id;
+            record.accountName = testAcct.name;
+
+            record.assetId = testAsset.id;
+            record.assetName = testAsset.name;
 
             record.totalCredit = ((Decimal) (Math.random() * 500)).setScale(2);
-            record.totalDebit = ((Decimal) (Math.random() * 500)).setScale(2);
+            record.totalDebit = record.totalCredit + ((Decimal) (Math.random() * 500)).setScale(2);
+
+            record.totalDiff=record.totalDebit-record.totalCredit;
+            record.percentDiff=(record.totalCredit/record.totalDebit*100).setScale(2);
+
 
             List<Transaction__c> debitList = new List<Transaction__c>();
             List<Transaction__c> creditList = new List<Transaction__c>();

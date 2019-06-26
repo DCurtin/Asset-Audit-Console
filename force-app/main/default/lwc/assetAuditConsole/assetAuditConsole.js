@@ -12,57 +12,57 @@ const columns = [
 
 export default class AssetAuditConsole extends NavigationMixin(LightningElement) {
     @track returnedRecordCount;
-    @track endDateStatus;
+    @track tableLoading;
     @track filterPercentDifference=0.20;
     @track fullSalesReport;
     @track columns = columns;
-    
-
+    @track statusMessage;
 
     startDate;
     endDate;
     recordUrls = new Map();
 
+    statusMessages ={
+        welcome: "Welcome, please choose a start and end date as well as a profit margin percentage. Then click Generate Report",
+        loading: "Table is generating, please wait",
+        doneLoading : "",
+        Error: "Please verify that you set start and end date"
+    }
+
     constructor()
     {
         super();
-        this.returnedRecordCount=0;
+        this.statusMessage=this.statusMessages.welcome;
     }
 
     generateReport()
     {
+        this.fullSalesReport = [];
+        if(this.startDate==null || this.endDate==null)
+        {
+            this.statusMessage=this.statusMessages.Error;
+        }
+
         //this.returnedRecordCount +=1;
+        this.statusMessage=this.statusMessages.loading;
         generateAssetAuditReport({startDate: this.startDate, endDate: this.endDate , percentFilter: (this.filterPercentDifference * 100)}).then(function(result)
         {
             console.log(result);
+            this.statusMessage=this.statusMessages.doneLoading;
             this.returnedRecordCount=result.length;
             this.fullSalesReport = result;
-            //this.generateUrlsForRecords(result);
 
         }.bind(this));
-    }
-
-    generateUrlsForRecords(fullSalesReport)
-    {
-        fullSalesReport.forEach( report => 
-            {
-                this.generateUrl(report.saleId, 'Transaction__c').then( event => this.recordUrls.set(report.saleId,event.url));
-                this.recordUrls.set(report.accountId, this.generateUrl(report.accountId, 'Account'));
-                this.recordUrls.set(report.assetId, this.generateUrl(report.assetId, 'IRAAsset__c'));
-            })
-            console.log(this.recordUrls);
     }
 
     updateStartDate(event)
     {
         this.startDate=event.detail.value;
-        
     }
 
     updateEndDate(event)
     {
         this.endDate=event.detail.value;
-        this.endDateStatus=Date.now().toISOString();
     }
 
     updateFilterPercentDifference(event)
@@ -91,12 +91,6 @@ export default class AssetAuditConsole extends NavigationMixin(LightningElement)
         this.handleObjectView(event.target.dataset.id, 'Transaction__c');
     }
 
-    /*handleObjectView(recordId)
-    {
-        console.log(this.recordUrls.get(recordId));
-        window.open(this.recordUrls.get(recordId));
-    }*/
-
     handleObjectView(objectId, objectType) {
         this[NavigationMixin.GenerateUrl]({
             type: 'standard__recordPage',
@@ -107,7 +101,6 @@ export default class AssetAuditConsole extends NavigationMixin(LightningElement)
             }
         }).then(result => { console.log(result);
             window.open(result)});
-        
-        
     }
+
 }

@@ -3,7 +3,7 @@ public with sharing class AssetAuditConsole {
     @AuraEnabled
     public static List<AssetAuditWrapper> generateAssetAuditReport (Date startDate, Date endDate, Decimal percentFilter)
     {
-        Map<Id,Transaction__c> fullSaleTransactionsMap = new Map<Id,Transaction__c>([SELECT id, Name, Account__c , Account_Type__c, CUSIP__c, XAudit_AccountName__c FROM Transaction__c where Full_Partial__c='Full' AND RecordType__c LIKE 'Sell%' AND (Date_Complete__c > :startDate AND Date_Complete__c < :endDate)]);
+        Map<Id,Transaction__c> fullSaleTransactionsMap = new Map<Id,Transaction__c>([SELECT id, Name, Account__c , Account_Type__c, CUSIP__c, XAudit_AccountName__c FROM Transaction__c where Full_Partial__c='Full' AND (RecordType__c LIKE 'Sell%' OR Transaction_Type__c LIKE 'Sell%') AND (Date_Complete__c > :startDate AND Date_Complete__c < :endDate)]);
 
         Set<Id> cusipIdSet = getCusipSetFromTransactionMap(fullSaleTransactionsMap);
         Map<Id,IRAAsset__c> cusipMap = getCusipMapFromCusipIdSet(cusipIdSet);
@@ -16,19 +16,9 @@ public with sharing class AssetAuditConsole {
         return assetAuditWrapperList;
     }
 
-
-
-    private static Map<Id,IRAAsset__c> getCusipMapFromCusipIdSet(Set<Id> cusipIdSet)
-    {
-        //Set<String> cusipIdSet = getCusipIdSetFromTransactionMap(transactionsMap);
-        Map<Id,IRAAsset__c> cusipMap = new Map<Id,IRAAsset__c>([SELECT id, name, Asset_Type__c FROM IRAAsset__c WHERE id in :cusipIdSet]);
-        return cusipMap;
-    }
-
-    private static Set<Id> getCusipSetFromTransactionMap(Map<Id, Transaction__c> transactionsMap)
+    public static Set<Id> getCusipSetFromTransactionMap(Map<Id, Transaction__c> transactionsMap)
     {
         Set<Id> cusipIdSet = new Set<Id>();
-
         for(Transaction__c trans : transactionsMap.Values())
         {
             cusipIdSet.add(trans.CUSIP__c);
@@ -36,42 +26,51 @@ public with sharing class AssetAuditConsole {
         return cusipIdSet;
     }
 
+    public static Map<Id,IRAAsset__c> getCusipMapFromCusipIdSet(Set<Id> cusipIdSet)
+    {
+        //Set<String> cusipIdSet = getCusipIdSetFromTransactionMap(transactionsMap);
+        Map<Id,IRAAsset__c> cusipMap = new Map<Id,IRAAsset__c>([SELECT id, name, Asset_Type__c FROM IRAAsset__c WHERE id in :cusipIdSet]);
+        return cusipMap;
+    }
+
     private static List<AssetAuditWrapper> generateAssetAuditWrapperList(Map<Id,Transaction__c> fullSaleTransactionsMap, Map<Id,IRAAsset__c>  cusipMap, Map<Id,Transaction__c> debitTransactionsMap, Map<Id,Transaction__c> creditTransactionsMap, Decimal percentFilter)
     {
-        list<String> args = new String[]{'0','number','###,###,##0.00'};
+        
         list<AssetAuditWrapper> assetAuditWrapperList = new list<AssetAuditWrapper>();
+
         for(Transaction__c fullSaleTransaction : fullSaleTransactionsMap.values())
         {
-            list<Transaction__c> relatedDebitTransactions = getAllTransactionsForCusipAndAccount(fullSaleTransaction.CUSIP__c, fullSaleTransaction.Account__c, debitTransactionsMap);
-            Decimal totalDebit = getTotalAmmountFromTransactionList(relatedDebitTransactions);
+            AssetAuditWrapper assetAudit = generateAuditAssetWrapper(fullSaleTransaction, cusipMap, debitTransactionsMap, creditTransactionsMap, percentFilter);
+            if(assetAudit!=null)
+            {
+                assetAuditWrapperList.add(assetAudit);
+            }
+        }
+        return assetAuditWrapperList;
+    }
 
-            list<Transaction__c> relatedCreditTransactions = getAllTransactionsForCusipAndAccount(fullSaleTransaction.CUSIP__c, fullSaleTransaction.Account__c, creditTransactionsMap);
-            Decimal totalCredit = getTotalAmmountFromTransactionList(relatedCreditTransactions);
+    public static AssetAuditWrapper generateAuditAssetWrapper(Transaction__c fullSaleTransaction, Map<Id,IRAAsset__c>  cusipMap, Map<Id,Transaction__c> debitTransactionsMap, Map<Id,Transaction__c> creditTransactionsMap, Decimal percentFilter)
+    {
+        list<String> currencyFormattingArgs = new String[]{'0','number','###,###,##0.00'};
+            list<Transaction__c> relatedDebitTransactions = new List<Transaction__c>();
+            Decimal totalDebit  = assignAllTransactionsReturnTotalAmmount(fullSaleTransaction.CUSIP__c, fullSaleTransaction.Account__c, debitTransactionsMap, relatedDebitTransactions);
+            
+            list<Transaction__c> relatedCreditTransactions = new List<Transaction__c>(); 
+            Decimal totalCredit = assignAllTransactionsReturnTotalAmmount(fullSaleTransaction.CUSIP__c, fullSaleTransaction.Account__c, creditTransactionsMap,relatedCreditTransactions);
 
             Decimal totalDiff = (totalCredit - totalDebit).setScale(2);
 
-            
-
-            if(totalDiff <=0 || totalDebit==0) //we are not interested in ammounts that lost logic for filtering percentage might go here
+            if( filterOutNegativeProfitOrNoDebit(totalDiff ,totalDebit)) //we are not interested in ammounts that lost logic for filtering percentage might go here
             {
-                continue;
+                return null;
             }
 
             Decimal percentDiff = ((totalDiff/totalDebit)*100).setScale(2);
 
-            if(percentDiff <= percentFilter)
+            if(filterOutProfitMarginBelowThreshold(percentDiff, percentFilter))
             {
-                continue;
-            }
-
-            /*Decimal percentDiff = 0;
-            if(totalDebit != 0)
-            {
-                percentDiff = ((totalDiff/totalDebit)*100).setScale(2);
-            }else {
-                percentDiff = 100;
-            }*/
-             
+                return null;
+            }        
 
             IRAAsset__c fullSalesCusip = cusipMap.get(fullSaleTransaction.CUSIP__c);
 
@@ -84,37 +83,39 @@ public with sharing class AssetAuditConsole {
             assetAudit.assetId = fullSalesCusip.Id;
             assetAudit.assetName = fullSalesCusip.Name + ' - ' + fullSalesCusip.Asset_Type__c;
             assetAudit.debitList=relatedDebitTransactions;
-            assetAudit.totalDebit=String.format(totalDebit.format(), args);
+            assetAudit.totalDebit=String.format(totalDebit.format(), currencyFormattingArgs);
             assetAudit.creditList=relatedCreditTransactions;
-            assetAudit.totalCredit=String.format(totalCredit.format(), args);
-            assetAudit.totalDiff=String.format(totalDiff.format(), args);
+            assetAudit.totalCredit=String.format(totalCredit.format(), currencyFormattingArgs);
+            assetAudit.totalDiff=String.format(totalDiff.format(), currencyFormattingArgs);
             assetAudit.percentDiff=percentDiff;
-            assetAuditWrapperList.add(assetAudit);
-        }
-        return assetAuditWrapperList;
+
+            return assetAudit;
     }
 
-    private static list<Transaction__c> getAllTransactionsForCusipAndAccount(Id CusipId, Id AccountId, Map<Id,Transaction__c> transactionsMap)
+    private static Boolean filterOutProfitMarginBelowThreshold(Decimal percentDiff, Decimal threshhold)
     {
-        List<Transaction__c> transactionsRelatedToCusipAndAccount = new List<Transaction__c>();
+        return (percentDiff < threshhold);
+    }
+
+
+    private static Boolean filterOutNegativeProfitOrNoDebit(Decimal totalDifference, Decimal totalDebit)
+    {
+        return (totalDifference <=0 || totalDebit==0);
+    }
+
+    private static Decimal assignAllTransactionsReturnTotalAmmount(Id CusipId, Id AccountId, Map<Id,Transaction__c> transactionsMap, list<Transaction__c> assignTo)
+    {
+        Decimal totalAmmount = 0;
+
         for(Transaction__c trans : transactionsMap.values())
-        {
-            if(trans.CUSIP__c == CusipId && trans.Account__c == AccountId)
+        { 
+            if(trans.CUSIP__c == CusipId && trans.Account__c == AccountId) 
             {
-                transactionsRelatedToCusipAndAccount.add(trans);
+                assignTo.add(trans);
+                totalAmmount += trans.Amount_Cash_Total__c;
             }
         }
-        return transactionsRelatedToCusipAndAccount;
-    }
-
-    private static Decimal getTotalAmmountFromTransactionList(List<Transaction__c> transactionList)
-    {
-        Decimal totalAmount = 0;
-        for(Transaction__c trans : transactionList)
-        {
-            totalAmount += trans.Amount_Cash_Total__c;
-        }
-        return totalAmount;
+        return totalAmmount;
     }
 
 }

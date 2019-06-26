@@ -17,7 +17,7 @@
                             <lightning-button label='Generate Report' onclick={generateReport}></lightning-button>
                     </div>
                     <div class='slds-col slds-size_1-of-4 slds-align-bottom'>
-                            <label>Returned Record Count: {returnedRecordCount} {endDateStatus} {filterPercentDifference}</label>
+                            <label>{statusMessage}</label>
                     </div>
             </div>
         </div>
@@ -28,14 +28,6 @@
                     <div class='slds-col slds-grid slds-m-bottom_xx-large'>
                         <div class='slds-col' style='width:50%'>
                             <label>List of Debits</label>
-                            <!--<table class='DebitTable' style='width:100%'>
-                                <tr>
-                                    <th>name</th>
-                                </tr>
-                                <template for:each={report.debitList} for:item="debitItem">
-                                    <tr key={debitItem.id}> <td>{debitItem.Name}</td></tr>
-                                </template>
-                            </table>-->
                             <lightning-datatable
                                 key-field="id"
                                 hide-checkbox-column="True"
@@ -46,14 +38,6 @@
                         </div>
                         <div class='slds-col' style='width:50%'>
                             <label> List of Credits</label>
-                            <!--<table class='DebitTable' style='width:100%'>
-                                <tr>
-                                    <th>name</th>
-                                </tr>
-                                <template for:each={report.creditList} for:item="creditItem">
-                                    <tr key={creditItem.id}> <td>{creditItem.Name}</td></tr>
-                                </template>
-                            </table>-->
                             <lightning-datatable
                                 key-field="id"
                                 hide-checkbox-column="True"
@@ -65,19 +49,7 @@
                     </div>
                     <div class='slds-col'><label class='slds-float--right slds-m-right_small'>Total Diff: ${report.totalDiff} || Percent Diff: {report.percentDiff}%</label></div>
                     <hr>
-
-                    <!--<div class='slds-grid'>
-                        <div class='slds-col'>
-                            <label>Total Debit </label>
-                            <label>${report.totalDebit}</label>
-                        </div>
-                        <div class='slds-col slds-border_left'>
-                            <label>Total Credit </label>
-                            <label>${report.totalCredit}</label>
-                        </div>
-                    </div>-->
                 </div>
-                <!--<table class="ReportTable" style="width:100%">-->
             </template>
         </template>
     </lightning-card>

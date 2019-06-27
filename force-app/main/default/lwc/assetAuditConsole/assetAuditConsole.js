@@ -43,7 +43,6 @@ export default class AssetAuditConsole extends NavigationMixin(LightningElement)
             this.statusMessage=this.statusMessages.Error;
         }
 
-        //this.returnedRecordCount +=1;
         this.statusMessage=this.statusMessages.loading;
         generateAssetAuditReport({startDate: this.startDate, endDate: this.endDate , percentFilter: (this.filterPercentDifference * 100)}).then(function(result)
         {

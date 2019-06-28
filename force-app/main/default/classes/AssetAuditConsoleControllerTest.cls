@@ -73,15 +73,28 @@ public with sharing class AssetAuditConsoleControllerTest {
         }
     }
 
+    static testMethod void getFieldIdToTransactionMap_validCaseCusipFieldName_CusipIdToListOfRelatedTransactionsMap()
+    {
+        Map<Id,IRAAsset__c> cusipMap = new Map<Id,IRAAsset__c>([SELECT id, Name FROM IRAAsset__c]);
+        List<Transaction__c> transactionsList = [SELECT Id, XAudit_AccountName__c, Name, Account__c, CUSIP__c,Amount_Cash_Total__c, Transaction_Type__c, Account_Type__c, Date_Complete__c, Credit_or_Debit__c From Transaction__c Where (Credit_or_Debit__c='Debit' OR Credit_or_Debit__c='Credit')  AND  Date_Complete__c != null  AND CUSIP__c In :cusipMap.keySet() ORDER BY Date_Complete__c ASC];
+        Map<Id, List<Transaction__c>> cusipIdToTransactionListMap = AssetAuditConsoleController.getFieldIdToTransactionMap(transactionsList, 'Cusip__c');
+
+        System.assertEquals(FULLSALECOUNT, cusipIdToTransactionListMap.size(), 'Transaction count');
+        Integer transCount = 0;
+        for(List<Transaction__c> transList : cusipIdToTransactionListMap.values())
+        {
+            transCount += transList.size();
+        }
+        System.assertEquals(transactionsList.size(), transCount, 'Transactions count in mapping does not match count of input transactions list');
+    }
+
     static testMethod void generateAuditAssetWrapper_validCase_AFilledAssetAuditWrapper()
     {
         Map<id,IRAAsset__c> cusipMap = new Map<id,IRAAsset__c>([SELECT ID, Name, Asset_Type__c FROM IRAAsset__c]);
 
-        //getFieldIdToTransactionMap
         List<Transaction__c> transactionsList = [SELECT Id, XAudit_AccountName__c, Name, Account__c, CUSIP__c,Amount_Cash_Total__c, Transaction_Type__c, Account_Type__c, Date_Complete__c, Credit_or_Debit__c From Transaction__c Where (Credit_or_Debit__c='Debit' OR Credit_or_Debit__c='Credit')  AND  Date_Complete__c != null  AND CUSIP__c In :cusipMap.keySet() ORDER BY Date_Complete__c ASC];
         Map<id, List<Transaction__c>> cusipIdToTransactionListMap = AssetAuditConsoleController.getFieldIdToTransactionMap(transactionsList,'Cusip__c');
         Map<id, List<Transaction__c>> AccountIdToTransactionListMap = AssetAuditConsoleController.getFieldIdToTransactionMap(transactionsList,'Account__c');
-        //Map<Id,Transaction__c> creditTransactionsMap = new Map<Id,Transaction__c>([SELECT Id, XAudit_AccountName__c,  Name, Account__c, CUSIP__c, Amount_Cash_Total__c, Transaction_Type__c, Account_Type__c, Date_Complete__c From Transaction__c Where Credit_or_Debit__c='Credit' AND  Date_Complete__c != null AND CUSIP__c In :cusipMap.keySet()  ORDER BY Date_Complete__c ASC]);
 
         Transaction__c salesTransaction;
         for(Transaction__c trans : transactionsList)
@@ -100,15 +113,16 @@ public with sharing class AssetAuditConsoleControllerTest {
         System.assertNotEquals(null, testWrapper);
 
     }
-
-    /*static testMethod void generateAuditAssetWrapper_ProfitMarginBelowThreshold_NullSobject()
+    static testMethod void generateAuditAssetWrapper_ProfitMarginBelowThreshold_NullSobject()
     {
         Map<id,IRAAsset__c> cusipMap = new Map<id,IRAAsset__c>([SELECT ID, Name, Asset_Type__c FROM IRAAsset__c]);
-        Map<Id,Transaction__c> debitTransactionsMap = new Map<Id,Transaction__c>([SELECT Id, XAudit_AccountName__c, Name, Account__c, CUSIP__c,Amount_Cash_Total__c, Transaction_Type__c, Account_Type__c, Date_Complete__c From Transaction__c Where Credit_or_Debit__c='Debit' AND  Date_Complete__c != null  AND CUSIP__c In :cusipMap.keySet() ORDER BY Date_Complete__c ASC]);
-        Map<Id,Transaction__c> creditTransactionsMap = new Map<Id,Transaction__c>([SELECT Id, XAudit_AccountName__c,  Name, Account__c, CUSIP__c, Amount_Cash_Total__c, Transaction_Type__c, Account_Type__c, Date_Complete__c From Transaction__c Where Credit_or_Debit__c='Credit' AND  Date_Complete__c != null AND CUSIP__c In :cusipMap.keySet()  ORDER BY Date_Complete__c ASC]);
+
+        List<Transaction__c> transactionsList = [SELECT Id, XAudit_AccountName__c, Name, Account__c, CUSIP__c,Amount_Cash_Total__c, Transaction_Type__c, Account_Type__c, Date_Complete__c, Credit_or_Debit__c From Transaction__c Where (Credit_or_Debit__c='Debit' OR Credit_or_Debit__c='Credit')  AND  Date_Complete__c != null  AND CUSIP__c In :cusipMap.keySet() ORDER BY Date_Complete__c ASC];
+        Map<id, List<Transaction__c>> cusipIdToTransactionListMap = AssetAuditConsoleController.getFieldIdToTransactionMap(transactionsList,'Cusip__c');
+        Map<id, List<Transaction__c>> AccountIdToTransactionListMap = AssetAuditConsoleController.getFieldIdToTransactionMap(transactionsList,'Account__c');
 
         Transaction__c salesTransaction;
-        for(Transaction__c trans : creditTransactionsMap.values())
+        for(Transaction__c trans : transactionsList)
         {
             if(cusipMap.get(trans.CUSIP__c).name == CUSIP+'3')
             {
@@ -118,20 +132,23 @@ public with sharing class AssetAuditConsoleControllerTest {
         }
 
         Decimal percentFilter = 20;
+        System.debug(salesTransaction);
 
-        AssetAuditWrapper testWrapper = AssetAuditConsoleController.generateAuditAssetWrapper(salesTransaction, cusipMap, debitTransactionsMap, creditTransactionsMap, percentFilter);
+        AssetAuditWrapper testWrapper = AssetAuditConsoleController.generateAuditAssetWrapper(salesTransaction, cusipMap, cusipIdToTransactionListMap, AccountIdToTransactionListMap, percentFilter);
         System.assertEquals(null, testWrapper);
 
-    }*/
+    }
 
-    /*static testMethod void generateAuditAssetWrapper_NegativeProfit_NullSobject()
+    static testMethod void  generateAuditAssetWrapper_NegativeProfit_NullSobject()
     {
         Map<id,IRAAsset__c> cusipMap = new Map<id,IRAAsset__c>([SELECT ID, Name, Asset_Type__c FROM IRAAsset__c]);
-        Map<Id,Transaction__c> debitTransactionsMap = new Map<Id,Transaction__c>([SELECT Id, XAudit_AccountName__c, Name, Account__c, CUSIP__c,Amount_Cash_Total__c, Transaction_Type__c, Account_Type__c, Date_Complete__c From Transaction__c Where Credit_or_Debit__c='Debit' AND  Date_Complete__c != null  AND CUSIP__c In :cusipMap.keySet() ORDER BY Date_Complete__c ASC]);
-        Map<Id,Transaction__c> creditTransactionsMap = new Map<Id,Transaction__c>([SELECT Id, XAudit_AccountName__c,  Name, Account__c, CUSIP__c, Amount_Cash_Total__c, Transaction_Type__c, Account_Type__c, Date_Complete__c From Transaction__c Where Credit_or_Debit__c='Credit' AND  Date_Complete__c != null AND CUSIP__c In :cusipMap.keySet()  ORDER BY Date_Complete__c ASC]);
+
+        List<Transaction__c> transactionsList = [SELECT Id, XAudit_AccountName__c, Name, Account__c, CUSIP__c,Amount_Cash_Total__c, Transaction_Type__c, Account_Type__c, Date_Complete__c, Credit_or_Debit__c From Transaction__c Where (Credit_or_Debit__c='Debit' OR Credit_or_Debit__c='Credit')  AND  Date_Complete__c != null  AND CUSIP__c In :cusipMap.keySet() ORDER BY Date_Complete__c ASC];
+        Map<id, List<Transaction__c>> cusipIdToTransactionListMap = AssetAuditConsoleController.getFieldIdToTransactionMap(transactionsList,'Cusip__c');
+        Map<id, List<Transaction__c>> AccountIdToTransactionListMap = AssetAuditConsoleController.getFieldIdToTransactionMap(transactionsList,'Account__c');
 
         Transaction__c salesTransaction;
-        for(Transaction__c trans : creditTransactionsMap.values())
+        for(Transaction__c trans : transactionsList)
         {
             if(cusipMap.get(trans.CUSIP__c).name == CUSIP+'1')
             {
@@ -141,11 +158,12 @@ public with sharing class AssetAuditConsoleControllerTest {
         }
 
         Decimal percentFilter = 20;
+        System.debug(salesTransaction);
 
-        AssetAuditWrapper testWrapper = AssetAuditConsoleController.generateAuditAssetWrapper(salesTransaction, cusipMap, debitTransactionsMap, creditTransactionsMap, percentFilter);
+        AssetAuditWrapper testWrapper = AssetAuditConsoleController.generateAuditAssetWrapper(salesTransaction, cusipMap, cusipIdToTransactionListMap, AccountIdToTransactionListMap, percentFilter);
         System.assertEquals(null, testWrapper);
 
-    }*/
+    }
 
     static testmethod void generateAssetAuditReport_validCase_AListOfFilledAssetWrappersAboveOrEqualToThreshold()
     {

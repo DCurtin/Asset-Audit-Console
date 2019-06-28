@@ -111,7 +111,8 @@ public with sharing class AssetAuditConsoleController {
                     {
                         creditList.add(acctTrans);
                         totalCredit+=acctTrans.Amount_Cash_Total__c;
-                    }else 
+                    }
+                    else 
                     {
                         debitList.add(acctTrans);
                         totalDebit+=acctTrans.Amount_Cash_Total__c;

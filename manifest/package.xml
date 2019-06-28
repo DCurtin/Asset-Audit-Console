@@ -1,39 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
-    <!--<types>
-        <members>*</members>
-        <name>ApexClass</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>ApexComponent</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>ApexPage</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>ApexTestSuite</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>ApexTrigger</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>AuraDefinitionBundle</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>LightningComponentBundle</name>
-    </types>-->
     <types>
         <members>AssetAuditWrapperTest</members>
         <name>ApexClass</name>
     </types>
     <types>
-        <members>AssetAuditConsoleTest</members>
+        <members>AssetAuditConsoleControllerTest</members>
         <name>ApexClass</name>
     </types>
     <types>
@@ -41,7 +13,7 @@
         <name>ApexClass</name>
     </types>
     <types>
-        <members>AssetAuditConsole</members>
+        <members>AssetAuditConsoleController</members>
         <name>ApexClass</name>
     </types>
     <types>

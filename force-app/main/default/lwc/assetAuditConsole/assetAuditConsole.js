@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { LightningElement, track } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
-import generateAssetAuditReport from '@salesforce/apex/AssetAuditConsole.generateAssetAuditReport';
+import generateAssetAuditReport from '@salesforce/apex/AssetAuditConsoleController.generateAssetAuditReport';
 
 const columns = [
     { label: 'Name', fieldName: 'Name'},

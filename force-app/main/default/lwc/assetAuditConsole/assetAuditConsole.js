@@ -11,8 +11,6 @@ const columns = [
 ]
 
 export default class AssetAuditConsole extends NavigationMixin(LightningElement) {
-    @track returnedRecordCount;
-    @track tableLoading;
     @track filterPercentDifference=0.20;
     @track fullSalesReport;
     @track columns = columns;
@@ -48,7 +46,6 @@ export default class AssetAuditConsole extends NavigationMixin(LightningElement)
         {
             console.log(result);
             this.statusMessage=this.statusMessages.doneLoading;
-            this.returnedRecordCount=result.length;
             this.fullSalesReport = result;
 
         }.bind(this));

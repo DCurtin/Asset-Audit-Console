@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
-<<<<<<< HEAD
     <types>
         <members>AssetAuditWrapperTest</members>
         <name>ApexClass</name>
@@ -23,7 +22,3 @@
     </types>
     <version>46.0</version>
 </Package>
-=======
-   <version>46.0</version>
-</Package>
->>>>>>> 23db6d963f9d42844d43fc1893d126468c0e3ccd
